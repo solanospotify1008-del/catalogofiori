@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIORI - Catálogo de Maquillaje</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Fuente Bodoni Moda para el logo (100% fiel al estilo de tu imagen) e Inter para el texto -->
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #E8E4DB; /* Fondo hueso/beige */
+        }
+        .font-logo {
+            font-family: 'Bodoni Moda', serif; /* La tipografía exacta de tu logo */
+        }
+        .hidden { display: none !important; }
+        
+        /* Colores personalizados FIORI */
+        .text-fiori-dark { color: #7A4B94; }
+        .bg-fiori-dark { background-color: #7A4B94; }
+        .hover-bg-fiori-dark:hover { background-color: #5c3770; }
+        .border-fiori-dark { border-color: #7A4B94; }
+        
+        .bg-fiori-light { background-color: #E6D9F2; } 
+        .text-fiori-light { color: #5c3770; }
+
+        /* Estilo suave para el select */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237A4B94' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Navegación Rediseñada -->
+    <nav class="bg-transparent py-6 px-4 sticky top-0 z-50 backdrop-blur-md bg-white/70 border-b border-[#D6D2C9]">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <!-- Título con la tipografía Bodoni Moda, idéntica al logo -->
+            <h1 class="text-6xl font-medium text-fiori-dark tracking-normal font-logo" style="line-height: 1;">FIORI</h1>
+            
+            <div class="flex items-center gap-4 w-full sm:w-auto">
+                <!-- Selector de categoría más suave y elegante -->
+                <div class="relative flex-grow sm:flex-grow-0">
+                    <select id="category-filter" class="w-full sm:w-64 bg-white/80 border border-[#D6D2C9] text-gray-700 text-sm rounded-full py-2.5 pl-5 pr-10 focus:outline-none focus:border-fiori-dark focus:ring-1 focus:ring-fiori-dark transition-all shadow-sm" onchange="filterProducts()">
+                        <option value="all">Todas las categorías</option>
+                    </select>
+                </div>
+                
+                <!-- Botón Admin más amigable -->
+                <button id="btn-show-login" onclick="showLogin()" class="flex items-center gap-2 bg-white/80 border border-[#D6D2C9] text-gray-600 hover:text-fiori-dark hover:border-fiori-dark rounded-full py-2 px-5 text-sm font-medium transition-all shadow-sm">
+                    <i class="fas fa-lock text-xs"></i> Admin
+                </button>
+                
+                <button id="btn-logout" onclick="logout()" class="hidden flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 rounded-full py-2 px-5 text-sm font-medium transition-all shadow-sm">
+                    <i class="fas fa-sign-out-alt text-xs"></i> Salir
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenedor Principal -->
+    <div class="max-w-6xl mx-auto p-4 mt-4">
+
+        <!-- Modal de Login -->
+        <div id="login-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
+            <div class="bg-white p-8 rounded-2xl shadow-2xl w-96 text-center border-t-4 border-fiori-dark">
+                <h2 class="text-4xl mb-6 text-fiori-dark font-logo tracking-wide">Acceso Admin</h2>
+                <div class="relative mb-6">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-key text-gray-400"></i>
+                    </div>
+                    <input type="password" id="admin-password" placeholder="Ingresa la contraseña" class="w-full border border-gray-300 pl-10 pr-3 py-3 rounded-lg focus:outline-none focus:border-fiori-dark focus:ring-1 focus:ring-fiori-dark transition-all">
+                </div>
+                <p id="login-error" class="text-red-500 text-sm hidden mb-4 bg-red-50 py-2 rounded-lg"><i class="fas fa-exclamation-circle"></i> Contraseña incorrecta</p>
+                <div class="flex justify-between gap-3">
+                    <button onclick="hideLogin()" class="w-1/2 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 font-medium transition">Cancelar</button>
+                    <button onclick="login()" class="w-1/2 bg-fiori-dark hover-bg-fiori-dark text-white py-3 rounded-lg font-medium transition shadow-md">Entrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de Administrador -->
+        <div id="admin-panel" class="hidden bg-white p-8 rounded-2xl shadow-lg mb-10 border-t-4 border-fiori-dark">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="bg-fiori-light p-3 rounded-full text-fiori-dark">
+                    <i class="fas fa-magic text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">Añadir Nuevo Producto</h2>
+            </div>
+            
+            <form id="add-product-form" class="grid grid-cols-1 md:grid-cols-2 gap-5" onsubmit="addProduct(event)">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Producto</label>
+                    <input type="text" id="prod-name" placeholder="Ej. Labial Mate Nude" required class="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:border-fiori-dark focus:ring-1 focus:ring-fiori-dark transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Precio ($)</label>
+                    <input type="number" id="prod-price" placeholder="0.00" step="0.01" required class="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:border-fiori-dark focus:ring-1 focus:ring-fiori-dark transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                    <input type="text" id="prod-category" placeholder="Ej. Labios, Ojos, Rostro" required class="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:border-fiori-dark focus:ring-1 focus:ring-fiori-dark transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">URL de la Imagen</label>
+                    <input type="url" id="prod-image" placeholder="https://ejemplo.com/imagen.jpg" required class="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:border-fiori-dark focus:ring-1 focus:ring-fiori-dark transition">
+                </div>
+                <button type="submit" class="md:col-span-2 mt-2 bg-fiori-dark hover-bg-fiori-dark text-white font-bold py-4 rounded-lg transition shadow-md flex justify-center items-center gap-2 text-lg">
+                    <i class="fas fa-plus-circle"></i> Guardar en Catálogo
+                </button>
+            </form>
+        </div>
+
+        <!-- Catálogo de Productos -->
+        <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <!-- Los productos se cargarán aquí dinámicamente -->
+        </div>
+        
+        <div id="empty-state" class="hidden text-center text-gray-500 mt-16 p-8 bg-white/50 rounded-2xl border border-[#D6D2C9] border-dashed">
+            <i class="fas fa-gem text-5xl mb-4 text-[#C8BDE0]"></i>
+            <h3 class="text-xl font-medium text-gray-700 mb-2">No hay productos aquí</h3>
+            <p>Selecciona otra categoría o añade productos desde el panel de administrador.</p>
+        </div>
+
+    </div>
+
+    <!-- Scripts de la aplicación -->
+    <script>
+        const ADMIN_PASSWORD = 'FIORI0702';
+        let isAdmin = false;
+        
+        let products = JSON.parse(localStorage.getItem('fiori_makeup_products')) || [
+            { id: 1, name: 'Paleta de Sombras Nude', price: 25.00, category: 'Ojos', image: 'https://images.unsplash.com/photo-1512496115841-db0aaf523806?w=500&q=80' },
+            { id: 2, name: 'Labial Mate Larga Duración', price: 12.50, category: 'Labios', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=500&q=80' },
+            { id: 3, name: 'Base Líquida Cobertura Media', price: 18.00, category: 'Rostro', image: 'https://images.unsplash.com/photo-1599305090598-fe179d501227?w=500&q=80' }
+        ];
+
+        const loginModal = document.getElementById('login-modal');
+        const adminPanel = document.getElementById('admin-panel');
+        const productsGrid = document.getElementById('products-grid');
+        const categoryFilter = document.getElementById('category-filter');
+        const btnShowLogin = document.getElementById('btn-show-login');
+        const btnLogout = document.getElementById('btn-logout');
+        const emptyState = document.getElementById('empty-state');
+        const loginError = document.getElementById('login-error');
+
+        function init() {
+            updateCategories();
+            renderProducts();
+        }
+
+        function showLogin() {
+            loginModal.classList.remove('hidden');
+            document.getElementById('admin-password').value = '';
+            document.getElementById('admin-password').focus();
+            loginError.classList.add('hidden');
+        }
+
+        function hideLogin() {
+            loginModal.classList.add('hidden');
+        }
+
+        function login() {
+            const pass = document.getElementById('admin-password').value;
+            if (pass === ADMIN_PASSWORD) {
+                isAdmin = true;
+                hideLogin();
+                adminPanel.classList.remove('hidden');
+                btnShowLogin.classList.add('hidden');
+                btnLogout.classList.remove('hidden');
+                renderProducts(); 
+            } else {
+                loginError.classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            isAdmin = false;
+            adminPanel.classList.add('hidden');
+            btnShowLogin.classList.remove('hidden');
+            btnLogout.classList.add('hidden');
+            renderProducts();
+        }
+
+        function addProduct(e) {
+            e.preventDefault();
+            const name = document.getElementById('prod-name').value;
+            const price = parseFloat(document.getElementById('prod-price').value);
+            let category = document.getElementById('prod-category').value.trim();
+            category = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+            const image = document.getElementById('prod-image').value;
+
+            const newProduct = { id: Date.now(), name, price, category, image };
+
+            products.push(newProduct);
+            saveData();
+            updateCategories();
+            renderProducts();
+            e.target.reset();
+            
+            categoryFilter.value = 'all';
+            filterProducts();
+        }
+
+        function deleteProduct(id) {
+            if(confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+                products = products.filter(p => p.id !== id);
+                saveData();
+                updateCategories();
+                renderProducts();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('fiori_makeup_products', JSON.stringify(products));
+        }
+
+        function updateCategories() {
+            const categories = [...new Set(products.map(p => p.category))];
+            let optionsHTML = '<option value="all">Todas las categorías</option>';
+            categories.sort().forEach(cat => {
+                optionsHTML += `<option value="${cat}">${cat}</option>`;
+            });
+            categoryFilter.innerHTML = optionsHTML;
+        }
+
+        function filterProducts() {
+            renderProducts(categoryFilter.value);
+        }
+
+        function renderProducts(category = 'all') {
+            productsGrid.innerHTML = '';
+            
+            const filteredProducts = category === 'all' 
+                ? products 
+                : products.filter(p => p.category === category);
+
+            if (filteredProducts.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                filteredProducts.forEach(prod => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col relative group border border-transparent hover:border-fiori-light overflow-hidden';
+                    
+                    const imgFallback = "this.onerror=null; this.src='https://via.placeholder.com/300x300?text=FIORI+Makeup';";
+
+                    card.innerHTML = `
+                        <div class="relative overflow-hidden aspect-square">
+                            <img src="${prod.image}" alt="${prod.name}" onerror="${imgFallback}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                            ${isAdmin ? `<button onclick="deleteProduct(${prod.id})" class="absolute top-3 right-3 bg-white/90 text-red-500 w-10 h-10 rounded-full hover:bg-red-500 hover:text-white flex items-center justify-center shadow-lg transition z-10" title="Eliminar Producto"><i class="fas fa-trash"></i></button>` : ''}
+                        </div>
+                        <div class="p-6 flex-grow flex flex-col justify-between bg-white z-20">
+                            <div>
+                                <span class="inline-block bg-fiori-light text-fiori-dark text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3">${prod.category}</span>
+                                <h3 class="text-lg font-semibold text-gray-800 leading-tight">${prod.name}</h3>
+                            </div>
+                            <div class="mt-5 flex justify-between items-end border-t border-gray-100 pt-4">
+                                <span class="text-sm text-gray-500 font-medium">Precio</span>
+                                <span class="text-2xl font-bold text-fiori-dark">$${prod.price.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    `;
+                    productsGrid.appendChild(card);
+                });
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
